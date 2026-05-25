@@ -5,6 +5,8 @@
 //  Created by Lorenzo Pichilli on 05/05/22.
 //
 
+import Flutter
+import UIKit
 import Foundation
 
 public class PullToRefreshChannelDelegate: ChannelDelegate {

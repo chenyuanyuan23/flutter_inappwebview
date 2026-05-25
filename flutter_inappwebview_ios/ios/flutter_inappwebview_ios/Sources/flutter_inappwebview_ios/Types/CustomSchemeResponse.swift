@@ -5,6 +5,7 @@
 //  Created by Lorenzo Pichilli on 07/05/22.
 //
 
+import Flutter
 import Foundation
 
 public class CustomSchemeResponse: NSObject {

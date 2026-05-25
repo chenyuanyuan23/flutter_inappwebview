@@ -5,6 +5,7 @@
 //  Created by Lorenzo Pichilli on 07/10/22.
 //
 
+import UIKit
 import Foundation
 
 public class FindSession: NSObject {

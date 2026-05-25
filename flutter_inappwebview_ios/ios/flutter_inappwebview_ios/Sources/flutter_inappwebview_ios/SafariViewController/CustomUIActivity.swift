@@ -5,6 +5,7 @@
 //  Created by Lorenzo Pichilli on 08/05/22.
 //
 
+import UIKit
 import Foundation
 
 class CustomUIActivity: UIActivity {

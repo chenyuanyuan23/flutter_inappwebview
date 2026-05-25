@@ -5,6 +5,8 @@
 //  Created by Lorenzo Pichilli on 08/05/22.
 //
 
+import UIKit
+import Flutter
 import Foundation
 import AuthenticationServices
 import SafariServices

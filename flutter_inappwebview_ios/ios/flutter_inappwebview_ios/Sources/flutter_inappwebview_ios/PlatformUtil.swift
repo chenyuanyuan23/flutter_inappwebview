@@ -5,6 +5,8 @@
 //  Created by Lorenzo Pichilli on 01/03/21.
 //
 
+import UIKit
+import Flutter
 import Foundation
 
 public class PlatformUtil: ChannelDelegate {

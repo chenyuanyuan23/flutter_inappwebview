@@ -5,6 +5,8 @@
 //  Created by Lorenzo Pichilli on 09/05/22.
 //
 
+import UIKit
+import Flutter
 import Foundation
 
 public enum PrintJobState: Int {

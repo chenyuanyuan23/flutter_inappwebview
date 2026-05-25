@@ -22,6 +22,7 @@ import Foundation
 import AVFoundation
 import SafariServices
 
+@objc(InAppWebViewFlutterPlugin)
 public class SwiftFlutterPlugin: NSObject, FlutterPlugin {
     
     var registrar: FlutterPluginRegistrar?

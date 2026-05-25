@@ -9,6 +9,11 @@ import Flutter
 import UIKit
 import WebKit
 import Foundation
+#if SWIFT_PACKAGE
+// SPM: 拆 OC target，需要显式 import 才能用 FloatButton / FloatButtonHost
+import flutter_inappwebview_ios_internal
+#endif
+// CocoaPods 单 target 模式下，OC public header 自动通过 umbrella 可见
 
 public class InAppBrowserWebViewController: UIViewController, InAppBrowserDelegate, UIScrollViewDelegate, UISearchBarDelegate, Disposable {
     static let METHOD_CHANNEL_NAME_PREFIX = "com.pichillilorenzo/flutter_inappbrowser_"
@@ -992,3 +997,10 @@ public class InAppBrowserWebViewController: UIViewController, InAppBrowserDelega
         dispose()
     }
 }
+
+// FloatButton 的宿主协议 conformance。close() 和 updateOrientation()
+// 都已经是 @objc public func，extension 仅需声明协议满足即可。
+// 解耦 OC → Swift 反向桥接，让 SPM target 可拆分（FloatButton 在 OC target，
+// InAppBrowserWebViewController 在 Swift target）。
+extension InAppBrowserWebViewController: FloatButtonHost {}
+

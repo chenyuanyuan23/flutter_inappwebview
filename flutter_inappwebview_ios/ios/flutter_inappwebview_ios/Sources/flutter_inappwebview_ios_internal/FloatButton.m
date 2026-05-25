@@ -1,4 +1,3 @@
-#import <flutter_inappwebview_ios/flutter_inappwebview_ios-Swift.h>
 #import "FloatButton.h"
 #import "FanweDeviceMacro.h"
 #import "FWColorMacro.h"
@@ -8,7 +7,7 @@
 
 
 @implementation FloatButton {
-    InAppBrowserWebViewController *_webCtrl;
+    UIViewController *_webCtrl;
     UIView *rootView;
     
     //-------------------拖拽按钮---------------------
@@ -130,7 +129,7 @@
     _viewPot.center = [self clampedCenterPoint:_viewPot.center];
 }
 
-- (instancetype)initWithController:(InAppBrowserWebViewController*)webCtrl{
+- (instancetype)initWithController:(UIViewController*)webCtrl{
     //是否横屏
     if (self == [super init])
     {
@@ -429,7 +428,7 @@
     //    [dict setValue:callback forKey:@"callback"];
     //    [dict setValue:args forKey:@"args"];
     //    [_methodChannel invokeMethod:@"doCallback" arguments:dict];
-    [_webCtrl close];
+    [(id<FloatButtonHost>)_webCtrl close];
 }
 
 - (UIViewController *) topMostController {
@@ -486,7 +485,7 @@
     [alert addAction:[UIAlertAction actionWithTitle:confirmText style:UIAlertActionStyleDefault handler:^(UIAlertAction *action){
         __strong typeof(self) strongSelf = weakSelf;
         if (strongSelf && otherValue) {
-            [strongSelf->_webCtrl updateOrientation];
+            [(id<FloatButtonHost>)strongSelf->_webCtrl updateOrientation];
             [alert setLandscape:@"0"];
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1*NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
                 [strongSelf->_viewPot removeFromSuperview];

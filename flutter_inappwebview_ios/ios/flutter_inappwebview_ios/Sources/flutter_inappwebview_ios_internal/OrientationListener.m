@@ -1,3 +1,4 @@
+#import <UIKit/UIKit.h>
 //
 //  OrientationListener.m
 //  native_device_orientation

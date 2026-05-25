@@ -103,7 +103,15 @@ public class InAppBrowserManager: ChannelDelegate {
     }
     
     public func presentViewController(webViewController: InAppBrowserWebViewController) {
-        let storyboard = UIStoryboard(name: InAppBrowserManager.WEBVIEW_STORYBOARD, bundle: Bundle(for: InAppWebViewFlutterPlugin.self))
+        // SPM 模式资源在 Bundle.module；CocoaPods 模式资源在 framework bundle。
+        // 原代码 Bundle(for: InAppWebViewFlutterPlugin.self) 用了 @objc OC 名，
+        // Swift 内部要用 Swift 真名 SwiftFlutterPlugin.
+        #if SWIFT_PACKAGE
+        let resourceBundle = Bundle.module
+        #else
+        let resourceBundle = Bundle(for: SwiftFlutterPlugin.self)
+        #endif
+        let storyboard = UIStoryboard(name: InAppBrowserManager.WEBVIEW_STORYBOARD, bundle: resourceBundle)
         let navController = storyboard.instantiateViewController(withIdentifier: InAppBrowserManager.NAV_STORYBOARD_CONTROLLER_ID) as! InAppBrowserNavigationController
         webViewController.edgesForExtendedLayout = []
         navController.tempOrienta = webViewController.faceOrientation

@@ -14,7 +14,8 @@ A new Flutter plugin.
   s.author           = { '' => '' }
   s.source           = { :path => '.' }
   s.source_files = 'flutter_inappwebview_ios/Sources/flutter_inappwebview_ios_internal/**/*.{h,m}', 'flutter_inappwebview_ios/Sources/flutter_inappwebview_ios/**/*.swift'
-  s.resources = 'flutter_inappwebview_ios/Sources/flutter_inappwebview_ios/Resources/**/*.storyboard'
+  s.resources = ['flutter_inappwebview_ios/Sources/flutter_inappwebview_ios/Resources/**/*.storyboard',
+                 'flutter_inappwebview_ios/Sources/flutter_inappwebview_ios_internal/Resources/**/*.png']
   s.public_header_files = 'flutter_inappwebview_ios/Sources/flutter_inappwebview_ios_internal/include/*.h'
   s.dependency 'Flutter'
   s.resource_bundles = {'flutter_inappwebview_ios_privacy' => ['flutter_inappwebview_ios/Sources/flutter_inappwebview_ios/Resources/PrivacyInfo.xcprivacy']}

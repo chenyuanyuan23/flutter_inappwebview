@@ -251,8 +251,22 @@
     
     [_viewPot addGestureRecognizer: pan];
     [self updatePangestureRect];
-    NSData *tongueData = [NSData dataWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"ic_sp_web_close@2x.png" ofType:nil]];
-    UIImage *img = [UIImage imageWithData:tongueData scale:2];
+    // 资源查找：优先 SPM 模块 bundle，回退到插件 framework bundle（Pod），再回退 mainBundle（旧路径兼容）
+    NSBundle *pluginBundle = [NSBundle bundleForClass:[self class]];
+    NSBundle *resourceBundle = pluginBundle;
+    NSURL *spmBundleURL = [pluginBundle URLForResource:@"flutter_inappwebview_ios_flutter_inappwebview_ios_internal" withExtension:@"bundle"];
+    if (spmBundleURL) {
+        NSBundle *spmBundle = [NSBundle bundleWithURL:spmBundleURL];
+        if (spmBundle) {
+            resourceBundle = spmBundle;
+        }
+    }
+    UIImage *img = [UIImage imageNamed:@"ic_sp_web_close" inBundle:resourceBundle compatibleWithTraitCollection:nil];
+    if (!img) {
+        // 兜底（极端情况），保持老行为不至于完全找不到
+        NSData *tongueData = [NSData dataWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"ic_sp_web_close@2x.png" ofType:nil]];
+        img = [UIImage imageWithData:tongueData scale:2];
+    }
     [_btn setImage:img forState:UIControlStateNormal];
     [_btn setImage:img forState:UIControlStateHighlighted];
     [_btn addTarget:self action:@selector(floatButtonAction) forControlEvents:UIControlEventTouchUpInside];

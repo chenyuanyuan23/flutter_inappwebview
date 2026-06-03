@@ -18,6 +18,9 @@ let package = Package(
         .target(
             name: "flutter_inappwebview_ios_internal",
             path: "Sources/flutter_inappwebview_ios_internal",
+            resources: [
+                .process("Resources")
+            ],
             publicHeadersPath: "include"
         ),
         .target(

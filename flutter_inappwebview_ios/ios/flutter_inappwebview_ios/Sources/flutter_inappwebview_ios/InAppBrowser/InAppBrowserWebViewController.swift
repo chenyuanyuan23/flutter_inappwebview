@@ -62,6 +62,7 @@ public class InAppBrowserWebViewController: UIViewController, InAppBrowserDelega
     var pullToRefreshInitialSettings: [String: Any?] = [:]
     var isHidden = false
     var menuItems: [InAppBrowserMenuItem] = []
+    private var webViewLayoutConstraints: [NSLayoutConstraint] = []
 
     public override func loadView() {
         guard let plugin = plugin, let registrar = plugin.registrar else {
@@ -113,12 +114,6 @@ public class InAppBrowserWebViewController: UIViewController, InAppBrowserDelega
         findInteractionController.prepare()
         
         prepareWebView()
-        let statusHeight: Double
-        if #available(iOS 13.0, *), keywindows() != nil {
-            statusHeight = InAppBrowserWebViewController.isFullScreen ? 44 : 0
-        } else {
-            statusHeight = Double(UIApplication.shared.statusBarFrame.size.height)
-        }
         webView.windowCreated = true
         
         progressBar = UIProgressView(progressViewStyle: .bar)
@@ -126,94 +121,55 @@ public class InAppBrowserWebViewController: UIViewController, InAppBrowserDelega
         
         view = UIView()
         let isCutTopButtom:Bool = (browserSettings?.isCutTopButtom)! // 是否裁切
-        let isHengPing:Bool = getIsHengPing(ori: browserSettings!.faceOrientation)   // 是否横屏
-        setupWebViewLayout(isCutTopButtom: isCutTopButtom, isHengPing: isHengPing, statusHeight: statusHeight)
+        setupWebViewLayout(isCutTopButtom: isCutTopButtom)
         
         view.insertSubview(progressBar, aboveSubview: webView)
     }
 
-    private func setupWebViewLayout(isCutTopButtom: Bool, isHengPing: Bool, statusHeight: Double) {
-        var adjustedStatusHeight = statusHeight
-//        webView!.removeConstraints(webView!.constraints)
-
+    private func setupWebViewLayout(isCutTopButtom: Bool) {
         view.addSubview(webView!)
-        webView!.removeConstraints(webView!.constraints)
         webView!.translatesAutoresizingMaskIntoConstraints = false
-        
+
         if isCutTopButtom {
-//            webView!.translatesAutoresizingMaskIntoConstraints = true
-//            view22 = UIView()
             view.backgroundColor = .black
-            if isHengPing {
-                adjustedStatusHeight = (statusHeight == 20 || statusHeight == 0) ? 0.0 : 30.0
-                setupView22AndWebViewFrames(statusHeight: adjustedStatusHeight, isHengPing: isHengPing)
-            } else {
-                adjustedStatusHeight = (statusHeight == 20) ? 0.0 : statusHeight
-                setupView22AndWebViewFrames(statusHeight: adjustedStatusHeight, isHengPing: isHengPing)
-            }
-        } else {
-            view.addSubview(webView!)
         }
+
+        updateWebViewLayoutConstraints()
     }
-    
-    private func setupView22AndWebViewFrames(statusHeight: Double, isHengPing: Bool) {
-        let screenWidth = UIScreen.main.bounds.width
-        let screenHeight = UIScreen.main.bounds.height
-//        view.translatesAutoresizingMaskIntoConstraints = false
-//        view22.translatesAutoresizingMaskIntoConstraints = false
-//        view22.frame = CGRect(x: 0, y: statusHeight, width: screenWidth, height: statusHeight)
-        
-        if isHengPing {
-//            webView!.frame = CGRect(x: statusHeight, y: 0, width: screenWidth - statusHeight, height: screenHeight)
-            // 获取当前视图的 safe area
-            NSLayoutConstraint.activate([
-                webView!.topAnchor.constraint(equalTo: view.topAnchor), // 顶部对齐父视图顶部
-                webView!.leftAnchor.constraint(equalTo: view.leftAnchor, constant: statusHeight), // 左边距离父视图左边100点
-                webView!.bottomAnchor.constraint(equalTo: view.bottomAnchor), // 底部对齐父视图底部
-                webView!.trailingAnchor.constraint(equalTo: view.trailingAnchor)  // 右边对齐父视图右边
-            ])
-        } else {
-//            view.translatesAutoresizingMaskIntoConstraints = false
-//            webView!.translatesAutoresizingMaskIntoConstraints = false
-//            webView!.frame = CGRect(x: 0, y: statusHeight, width: screenWidth, height: screenHeight - statusHeight - 20)
-            NSLayoutConstraint.activate([
-                webView!.topAnchor.constraint(equalTo: view.topAnchor,constant: statusHeight), // 顶部对齐父视图顶部
-                webView!.leftAnchor.constraint(equalTo: view.leftAnchor), // 左边距离父视图左边100点
-                webView!.bottomAnchor.constraint(equalTo: view.bottomAnchor,constant: screenHeight - statusHeight - 20), // 底部对齐父视图底部
-                webView!.rightAnchor.constraint(equalTo: view.rightAnchor)  // 右边对齐父视图右边
-            ])
-        }
-    }
-    
-    func keywindows() -> UIWindow? {
-        if #available(iOS 13.0, *) {
-            return UIApplication.shared.connectedScenes
-                .compactMap { $0 as? UIWindowScene }
-                .first(where: { $0.activationState == .foregroundActive })?
-                .windows.first
-        } else {
-            return UIApplication.shared.keyWindow
-        }
-    }
-    
-    // 是否横屏
-    private func getIsHengPing(ori: String) -> Bool {
-        return ori == "LandscapeLeft" || ori == "LandscapeRight"
-    }
-    
-    static var isFullScreen: Bool {
-        if #available(iOS 11, *) {
-            guard let window = UIApplication.shared.delegate?.window,
-                  let unwrapedWindow = window else {
-                return false
-            }
-            
-            if unwrapedWindow.safeAreaInsets.left > 0 || unwrapedWindow.safeAreaInsets.bottom > 0 {
-                print(unwrapedWindow.safeAreaInsets)
-                return true
+
+    private func updateWebViewLayoutConstraints() {
+        guard let webView = webView else { return }
+
+        NSLayoutConstraint.deactivate(webViewLayoutConstraints)
+        webViewLayoutConstraints.removeAll()
+
+        for constraint in view.constraints {
+            if constraint.firstItem as? UIView == webView || constraint.secondItem as? UIView == webView {
+                view.removeConstraint(constraint)
             }
         }
-        return false
+
+        let isCutTopButtom = browserSettings?.isCutTopButtom ?? false
+        webView.translatesAutoresizingMaskIntoConstraints = false
+
+        if #available(iOS 11.0, *), isCutTopButtom {
+            let safeArea = view.safeAreaLayoutGuide
+            webViewLayoutConstraints = [
+                webView.topAnchor.constraint(equalTo: safeArea.topAnchor),
+                webView.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor),
+                webView.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor),
+                webView.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor)
+            ]
+        } else {
+            webViewLayoutConstraints = [
+                webView.topAnchor.constraint(equalTo: view.topAnchor),
+                webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+                webView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+                webView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
+            ]
+        }
+
+        NSLayoutConstraint.activate(webViewLayoutConstraints)
     }
     
     public override func viewDidLoad() {
@@ -224,22 +180,7 @@ public class InAppBrowserWebViewController: UIViewController, InAppBrowserDelega
         
         
         if #available(iOS 9.0, *) {
-            let isCutTopButtom:Bool = (browserSettings?.isCutTopButtom)! // 是否裁切
-            let statusHeight: Double
-            if #available(iOS 13.0, *), keywindows() != nil {
-                statusHeight = InAppBrowserWebViewController.isFullScreen ? 44 : 0
-            } else {
-                statusHeight = Double(UIApplication.shared.statusBarFrame.size.height)
-            }
-            let num = isCutTopButtom ? statusHeight:0.0
-            //可以在这边修改webview的 显示区域
-            webView?.topAnchor.constraint(equalTo: self.view.topAnchor, constant: num).isActive = true
-            webView?.bottomAnchor.constraint(
-                equalTo: self.view.bottomAnchor,
-                constant: isCutTopButtom ? -20.0 : 0.0 
-            ).isActive = true
-            webView?.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 0.0).isActive = true
-            webView?.trailingAnchor.constraint(equalTo: self.view.trailingAnchor, constant: 0.0).isActive = true
+            updateWebViewLayoutConstraints()
 
             progressBar.topAnchor.constraint(equalTo: self.view.topAnchor, constant: 0.0).isActive = true
             progressBar.leadingAnchor.constraint(equalTo: self.view.leadingAnchor, constant: 0.0).isActive = true
@@ -300,6 +241,14 @@ public class InAppBrowserWebViewController: UIViewController, InAppBrowserDelega
         showCloseButton(closeButtonOptions: closeOption)
         //状态重刷
         setNeedsStatusBarAppearanceUpdate()
+    }
+
+    public override func viewSafeAreaInsetsDidChange() {
+        super.viewSafeAreaInsetsDidChange()
+
+        if browserSettings?.isCutTopButtom ?? false {
+            updateWebViewLayoutConstraints()
+        }
     }
     
     public func initLoad() {
@@ -677,57 +626,10 @@ public class InAppBrowserWebViewController: UIViewController, InAppBrowserDelega
 
     /// 更新 WebView 布局和小球位置（根据屏幕方向变化）
     public func updateWebViewLayout(isLandscape: Bool) {
-        guard let webView = webView else { return }
         let isCutTopButtom = browserSettings?.isCutTopButtom ?? false
 
-        // 只有 isCutTopButtom 为 true 时才需要更新布局
         if isCutTopButtom {
-            // 获取状态栏高度
-            let statusHeight: Double
-            if #available(iOS 13.0, *), keywindows() != nil {
-                statusHeight = Double(keywindows()!.windowScene?.statusBarManager?.statusBarFrame.height ?? 0)
-            } else {
-                statusHeight = Double(UIApplication.shared.statusBarFrame.size.height)
-            }
-
-            // 移除旧的约束
-            webView.removeConstraints(webView.constraints)
-            // 移除 webView 相关的父视图约束
-            for constraint in view.constraints {
-                if constraint.firstItem as? UIView == webView || constraint.secondItem as? UIView == webView {
-                    view.removeConstraint(constraint)
-                }
-            }
-
-            // 计算调整后的状态栏高度
-            var adjustedStatusHeight: Double
-            if isLandscape {
-                adjustedStatusHeight = (statusHeight == 20 || statusHeight == 0) ? 0.0 : 30.0
-            } else {
-                adjustedStatusHeight = (statusHeight == 20) ? 0.0 : statusHeight
-            }
-
-            // 重新设置约束
-            webView.translatesAutoresizingMaskIntoConstraints = false
-            if isLandscape {
-                // 横屏布局：左边留出 statusHeight
-                NSLayoutConstraint.activate([
-                    webView.topAnchor.constraint(equalTo: view.topAnchor),
-                    webView.leftAnchor.constraint(equalTo: view.leftAnchor, constant: adjustedStatusHeight),
-                    webView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-                    webView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
-                ])
-            } else {
-                // 竖屏布局：顶部留出 statusHeight，底部对齐
-                NSLayoutConstraint.activate([
-                    webView.topAnchor.constraint(equalTo: view.topAnchor, constant: adjustedStatusHeight),
-                    webView.leftAnchor.constraint(equalTo: view.leftAnchor),
-                    webView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-                    webView.rightAnchor.constraint(equalTo: view.rightAnchor)
-                ])
-            }
-
-            // 强制更新布局
+            updateWebViewLayoutConstraints()
             view.setNeedsLayout()
             view.layoutIfNeeded()
         }
@@ -1003,4 +905,3 @@ public class InAppBrowserWebViewController: UIViewController, InAppBrowserDelega
 // 解耦 OC → Swift 反向桥接，让 SPM target 可拆分（FloatButton 在 OC target，
 // InAppBrowserWebViewController 在 Swift target）。
 extension InAppBrowserWebViewController: FloatButtonHost {}
-

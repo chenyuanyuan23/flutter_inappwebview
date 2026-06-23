@@ -137,7 +137,7 @@ public class InAppBrowserWebViewController: UIViewController, InAppBrowserDelega
         updateWebViewLayoutConstraints()
     }
 
-    private func updateWebViewLayoutConstraints() {
+    private func updateWebViewLayoutConstraints(isLandscapeOverride: Bool? = nil) {
         guard let webView = webView else { return }
 
         NSLayoutConstraint.deactivate(webViewLayoutConstraints)
@@ -153,13 +153,24 @@ public class InAppBrowserWebViewController: UIViewController, InAppBrowserDelega
         webView.translatesAutoresizingMaskIntoConstraints = false
 
         if #available(iOS 11.0, *), isCutTopButtom {
-            let safeArea = view.safeAreaLayoutGuide
-            webViewLayoutConstraints = [
-                webView.topAnchor.constraint(equalTo: safeArea.topAnchor),
-                webView.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor),
-                webView.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor),
-                webView.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor)
-            ]
+            let safeAreaInsets = view.safeAreaInsets
+            let isLandscape = isLandscapeOverride ?? isCurrentLandscape()
+
+            if isLandscape {
+                webViewLayoutConstraints = [
+                    webView.topAnchor.constraint(equalTo: view.topAnchor),
+                    webView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: safeAreaInsets.left),
+                    webView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+                    webView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -safeAreaInsets.right)
+                ]
+            } else {
+                webViewLayoutConstraints = [
+                    webView.topAnchor.constraint(equalTo: view.topAnchor, constant: safeAreaInsets.top),
+                    webView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: safeAreaInsets.left),
+                    webView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+                    webView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -safeAreaInsets.right)
+                ]
+            }
         } else {
             webViewLayoutConstraints = [
                 webView.topAnchor.constraint(equalTo: view.topAnchor),
@@ -170,6 +181,14 @@ public class InAppBrowserWebViewController: UIViewController, InAppBrowserDelega
         }
 
         NSLayoutConstraint.activate(webViewLayoutConstraints)
+    }
+
+    private func isCurrentLandscape() -> Bool {
+        if #available(iOS 13.0, *), let interfaceOrientation = view.window?.windowScene?.interfaceOrientation {
+            return interfaceOrientation.isLandscape
+        }
+
+        return view.bounds.width > view.bounds.height
     }
     
     public override func viewDidLoad() {
@@ -629,7 +648,7 @@ public class InAppBrowserWebViewController: UIViewController, InAppBrowserDelega
         let isCutTopButtom = browserSettings?.isCutTopButtom ?? false
 
         if isCutTopButtom {
-            updateWebViewLayoutConstraints()
+            updateWebViewLayoutConstraints(isLandscapeOverride: isLandscape)
             view.setNeedsLayout()
             view.layoutIfNeeded()
         }
